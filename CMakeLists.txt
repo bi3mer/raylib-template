@@ -19,8 +19,10 @@ if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 endif()
 
-# Add raylib as a subdirectory
-add_subdirectory(lib/raylib)
+# Set raylib paths
+set(RAYLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/raylib)
+set(RAYLIB_INCLUDE_DIR ${RAYLIB_DIR}/include)
+set(RAYLIB_LIB_DIR ${RAYLIB_DIR}/lib)
 
 # Collect source files
 file(GLOB_RECURSE SOURCES
@@ -41,20 +43,29 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${RAYLIB_INCLUDE_DIR}
 )
 
-# Link raylib
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
-
-# Platform-specific linking
+# Link raylib based on platform
 if(APPLE)
+    # Use dynamic library on macOS
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${RAYLIB_LIB_DIR}/libraylib.dylib)
+
     target_link_libraries(${PROJECT_NAME} PRIVATE
         "-framework IOKit"
         "-framework Cocoa"
         "-framework OpenGL"
     )
+
+    # Set rpath so the executable can find the dylib
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        BUILD_RPATH ${RAYLIB_LIB_DIR}
+        INSTALL_RPATH "@executable_path/../lib/raylib/lib"
+    )
 elseif(UNIX AND NOT APPLE)
-    # Linux
+    # Linux - use shared library
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${RAYLIB_LIB_DIR}/libraylib.so)
+
     target_link_libraries(${PROJECT_NAME} PRIVATE
         m
         pthread
@@ -68,12 +79,31 @@ elseif(UNIX AND NOT APPLE)
     # Find and link X11 (if using desktop)
     find_package(X11 REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${X11_LIBRARIES})
+
+    # Set rpath so the executable can find libraylib.so
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        BUILD_RPATH ${RAYLIB_LIB_DIR}
+        INSTALL_RPATH "$ORIGIN/../lib/raylib/lib"
+    )
 elseif(WIN32)
-    # Windows
+    # Windows - use static library and copy DLL
+    if(MINGW)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${RAYLIB_LIB_DIR}/libraylib.a)
+    else()
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${RAYLIB_LIB_DIR}/raylib.lib)
+    endif()
+
     target_link_libraries(${PROJECT_NAME} PRIVATE
         winmm
         gdi32
         opengl32
+    )
+
+    # Copy raylib.dll to output directory
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${RAYLIB_LIB_DIR}/raylib.dll"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
     )
 
     # Set subsystem to windows to avoid console window (optional)
