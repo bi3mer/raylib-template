@@ -8,7 +8,7 @@ Instructions assume you are (1) using Linux or macOS and (2) that you have [gcc 
 
 ```bash
 git clone _________________________
-cd raylib-pong
+cd _________________
 ./setup.sh
 ```
 
