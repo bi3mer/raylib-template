@@ -1,4 +1,4 @@
-# Pong
+# ___________
 
 A simple [raylib](https://www.raylib.com/index.html)-based implementation of ______________.
 
