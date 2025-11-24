@@ -7,7 +7,7 @@ pub fn build(b: *std.Build) void {
     const raylib_dep = b.dependency("raylib", .{ .target = target, .optimize = optimize });
 
     const exe = b.addExecutable(.{
-        .name = "tic-tac-toe",
+        .name = "game-name-goes-here-please-update-it",
         .root_module = b.createModule(.{
             .target = target,
             .optimize = optimize,
