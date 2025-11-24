@@ -9,8 +9,12 @@ Instructions assume you are (1) using Linux or macOS and (2) that you have [gcc 
 ```bash
 git clone -----------------------
 cd -----------------------
-zig build
-./zig-out/-----------------------
+mkdir deps
+cd deps
+git clone --depth 1 https://github.com/raysan5/raylib.git
+rm -rf raylib/.git
+cd ..
+zig build run
 ```
 
 ## Release build
